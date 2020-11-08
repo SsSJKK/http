@@ -111,11 +111,7 @@ func (s *Server) handle(conn net.Conn) {
 			if ok {
 				fn(&req)
 			}
-
-		} else {
-			return
 		}
-
 	}
 }
 
