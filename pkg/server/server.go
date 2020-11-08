@@ -93,9 +93,10 @@ func (s *Server) handle(conn net.Conn) {
 			if ok {
 				fn(&req)
 			}
+			return
 		}
-		if len(p)==4{
-			p2 := strings.Split(p[1],"category")
+		if len(p) == 4 {
+			p2 := strings.Split(p[1], "category")
 			var pathParams = map[string]string{}
 			pathParams["catId"] = p2[1]
 			pathParams["pId"] = p[3]
@@ -106,7 +107,7 @@ func (s *Server) handle(conn net.Conn) {
 			if ok {
 				fn(&req)
 			}
-
+			return
 		}
 
 	}
