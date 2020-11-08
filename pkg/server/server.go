@@ -82,7 +82,7 @@ func (s *Server) handle(conn net.Conn) {
 			return
 		}
 		p := strings.Split(uri.Path, "/")
-		if len(p) == 3 {
+		if p[1] == "payments" && len(p) == 3 {
 			uri.RawQuery = "id=" + p[2]
 			var pathParams = map[string]string{}
 			pathParams["id"] = p[2]
@@ -93,10 +93,14 @@ func (s *Server) handle(conn net.Conn) {
 			if ok {
 				fn(&req)
 			}
-			return
-		}
-		if len(p) == 4 {
+		} else if len(p) == 4 && p[2] == "product" {
 			p2 := strings.Split(p[1], "category")
+			if len(p2) < 2 || len(p) < 2 {
+				return
+			}
+			if strings.Split(p[1], p2[1])[0] != "category" {
+				return
+			}
 			var pathParams = map[string]string{}
 			pathParams["catId"] = p2[1]
 			pathParams["pId"] = p[3]
@@ -107,6 +111,8 @@ func (s *Server) handle(conn net.Conn) {
 			if ok {
 				fn(&req)
 			}
+
+		} else {
 			return
 		}
 
