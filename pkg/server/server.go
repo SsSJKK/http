@@ -17,6 +17,7 @@ const ErrBadRequest = "Error bad request !!!"
 type Request struct {
 	Conn        net.Conn
 	QueryParams url.Values
+	PathParams  map[string]string
 }
 
 // HandlerFunc ...
@@ -75,17 +76,39 @@ func (s *Server) handle(conn net.Conn) {
 		}
 		path := parts[1]
 		uri, err := url.ParseRequestURI(path)
+
 		if err != nil {
 			log.Println("error in decoding")
 			return
 		}
-		var req = Request{conn, uri.Query()}
-		s.mu.RLock()
-		fn, ok := s.handlers[uri.Path]
-		s.mu.RUnlock()
-		if ok {
-			fn(&req)
+		p := strings.Split(uri.Path, "/")
+		if len(p) == 3 {
+			uri.RawQuery = "id=" + p[2]
+			var pathParams = map[string]string{}
+			pathParams["id"] = p[2]
+			var req = Request{conn, uri.Query(), pathParams}
+			s.mu.RLock()
+			fn, ok := s.handlers["/"+p[1]+"/{id}"]
+			s.mu.RUnlock()
+			if ok {
+				fn(&req)
+			}
 		}
+		if len(p)==4{
+			p2 := strings.Split(p[1],"category")
+			var pathParams = map[string]string{}
+			pathParams["catId"] = p2[1]
+			pathParams["pId"] = p[3]
+			var req = Request{conn, uri.Query(), pathParams}
+			s.mu.RLock()
+			fn, ok := s.handlers["/category{catId}/product/{pId}"]
+			s.mu.RUnlock()
+			if ok {
+				fn(&req)
+			}
+
+		}
+
 	}
 }
 

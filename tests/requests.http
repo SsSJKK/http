@@ -1,3 +1,6 @@
 ###
 
-GET http://localhost:9999/payments?id=1 HTTP/1.1
+GET http://localhost:9999/payments/23 HTTP/1.1
+
+###
+GET http://localhost:9999/category67/product/543 HTTP/1.1
