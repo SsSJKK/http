@@ -61,7 +61,6 @@ func (s *Server) handle(conn net.Conn) {
 			return
 		}
 		var req Request
-		var path1 string
 		rline := string(data[:index])
 		parts := strings.Split(rline, " ")
 		req.PathParams = make(map[string]string)
@@ -83,51 +82,44 @@ func (s *Server) handle(conn net.Conn) {
 			}
 			req.Conn = conn
 			req.QueryParams = url.Query()
-			/// PathParams...
-			partsPath := strings.Split(url.Path, "/")
-			for _, e := range partsPath {
-				if e == "" {
-					continue
-				}
-				_, err := strconv.Atoi(e)
-				if err == nil {
-					path1 += ("/{id}")
-					req.PathParams["id"] = e
-				} else {
-					_, err := strconv.Atoi(string(e[len(e)-1]))
+			pathSplit := strings.Split(path, "/")
+			var p string
+			var z string
+			var zz string
+			var pathParms = make(map[string]string)
+			for _, pathPart := range pathSplit {
+				b := true
+				for i, x := range strings.Split(pathPart, "") {
+					_, err := strconv.Atoi(x)
 					if err == nil {
-						var firstInt int = 0
-						for i := 0; i < len(e); i++ {
-							_, err := strconv.Atoi(string(e[i]))
-							if err == nil {
-								firstInt = i
-								break
-							}
+						if i <= 2 {
+							z = "id"
+							zz = "{" + z + "}"
+						} else {
+							z = pathPart[:3] + "Id"
+							zz = "{" + z + "}"
 						}
-						path1 += ("/" + e[:firstInt] + "{" + e[:firstInt] + "Id}")
-						req.PathParams[e[:firstInt]+"Id"] = e[firstInt:]
-					} else {
-						path1 += ("/" + e)
+						p += "/" + pathPart[:i] + zz
+						b = false
+						pathParms[z] = pathPart[i:]
+						break
 					}
 				}
+				if b && pathPart != "" {
+					p += "/" + pathPart
+				}
 			}
-			req.PathParams["catId"] = req.PathParams["categoryId"]
-		//	log.Println( req.PathParams)
+			req.PathParams = pathParms
 
-		}
+			s.mu.RLock()
+			f, good := s.handlers[p]
+			s.mu.RUnlock()
 
-		var good bool = false
-		var f = func(req *Request) {}
-		path2 := strings.ReplaceAll(path1,"categoryId","catId")
-		//log.Print(path2)
-		s.mu.RLock()
-		f, good = s.handlers[path2]
-		s.mu.RUnlock()
-
-		if good == false {
-			conn.Close()
-		} else {
-			f(&req)
+			if good == false {
+				conn.Close()
+			} else {
+				f(&req)
+			}
 		}
 	}
 }
