@@ -123,14 +123,11 @@ func (s *Server) handle(conn net.Conn) {
 				headerLine := strings.Split(v, ": ")
 				mp[headerLine[0]] = headerLine[1]
 			}
-			if path == "/api/cards/1"{
-				p = path
-			}
 			req.Headers = mp
 			s.mu.RLock()
 			f, good := s.handlers[p]
 			s.mu.RUnlock()
-			
+
 			if good == false {
 				conn.Close()
 			} else {
@@ -151,6 +148,9 @@ func (s *Server) handle(conn net.Conn) {
 // Start ...
 func (s *Server) Start() error {
 	listener, err := net.Listen("tcp", s.addr)
+	s.Register("/api/cards/{id}", func(req *Request) {
+		log.Print("ффффффффффф")
+	})
 	if err != nil {
 		log.Print(err)
 		return err
