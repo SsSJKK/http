@@ -10,7 +10,7 @@ import (
 
 func main() {
 	host := "0.0.0.0"
-	port := "9999"
+	port := "9998"
 
 	if err := execute(host, port); err != nil {
 		os.Exit(1)
@@ -24,7 +24,7 @@ func execute(host string, port string) (err error) {
 		id := req.PathParams["id"]
 		log.Print(id)
 	})
-	srv.Register("/category{catId}/product/{pId}", func(req *server.Request) {
+	srv.Register("/category{id}/{id}", func(req *server.Request) {
 		catID := req.PathParams["catId"]
 		pID := req.PathParams["pId"]
 		log.Println(catID, pID)

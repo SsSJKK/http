@@ -5,6 +5,7 @@ import (
 	"log"
 	"net"
 	"net/url"
+	"strconv"
 	"strings"
 	"sync"
 )
@@ -45,7 +46,7 @@ func (s *Server) Register(path string, handler HandlerFunc) {
 func (s *Server) handle(conn net.Conn) {
 	defer conn.Close()
 
-	buf := make([]byte, (1024 * 50))
+	buf := make([]byte, 4096)
 
 	for {
 		rbyte, err := conn.Read(buf)
@@ -56,17 +57,16 @@ func (s *Server) handle(conn net.Conn) {
 		ldelim := []byte{'\r', '\n'}
 		index := bytes.Index(data, ldelim)
 		if index == -1 {
-			log.Println("chars not found")
+			log.Println("delim chars not found :(")
 			return
 		}
 		var req Request
-		var good bool = true
-		var path1 string = ""
+		var path1 string
 		rline := string(data[:index])
 		parts := strings.Split(rline, " ")
 		req.PathParams = make(map[string]string)
 		if len(parts) == 3 {
-			path, version := parts[1], parts[2]
+			_, path, version := parts[0], parts[1], parts[2]
 			decode, err := url.PathUnescape(path)
 			if err != nil {
 				log.Println(err)
@@ -81,26 +81,51 @@ func (s *Server) handle(conn net.Conn) {
 				log.Println(err)
 				return
 			}
-			p := strings.Split(path, "/")
-			if len(p) < 2 {
-				return
-			}
-			if p[2] == "payments" {
-				path1 = "/" + p[2] + "/{id}"
-				if len(p) == 4 {
-					req.PathParams["id"] = p[3]
+			req.Conn = conn
+			req.QueryParams = url.Query()
+			/// PathParams...
+			partsPath := strings.Split(url.Path, "/")
+			for _, e := range partsPath {
+				if e == "" {
+					continue
+				}
+				_, err := strconv.Atoi(e)
+				if err == nil {
+					path1 += ("/{id}")
+					req.PathParams["id"] = e
+				} else {
+					_, err := strconv.Atoi(string(e[len(e)-1]))
+					if err == nil {
+						var firstInt int = 0
+						for i := 0; i < len(e); i++ {
+							_, err := strconv.Atoi(string(e[i]))
+							if err == nil {
+								firstInt = i
+								break
+							}
+						}
+						path1 += ("/" + e[:firstInt] + "{" + e[:firstInt] + "Id}")
+						req.PathParams[e[:firstInt]+"Id"] = e[firstInt:]
+					} else {
+						path1 += ("/" + e)
+					}
 				}
 			}
-			log.Println(good, path, url, p, path1)
-			fn, ok := s.handlers[path1]
-			if ok {
-				fn(&req)
-			} else {
-				conn.Close()
-				log.Print("conn.Close()")
-			}
+
 		}
 
+		var good bool = false
+		var f = func(req *Request) {}
+
+		s.mu.RLock()
+		f, good = s.handlers[path1]
+		s.mu.RUnlock()
+
+		if good == false {
+			conn.Close()
+		} else {
+			f(&req)
+		}
 	}
 }
 
