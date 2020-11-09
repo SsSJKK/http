@@ -87,7 +87,6 @@ func (s *Server) handle(conn net.Conn) {
 			var p string
 			var z string
 			var zz string
-			var header []byte = data[index+2:]
 			req.Headers = make(map[string]string)
 			//var hh = make(map[string]string)
 			var pathParms = make(map[string]string)
@@ -115,30 +114,16 @@ func (s *Server) handle(conn net.Conn) {
 				}
 			}
 			req.PathParams = pathParms
-			/// Headers .....
-			if len(header) > 0 {
-				ldelim := []byte{'\r', '\n', '\r', '\n'}
-				index := bytes.Index(header, ldelim)
-				if index == -1 {
-					log.Println("index -1")
-					return
-				}
-				data := string(header[:index])
-				lheader := strings.Split(data, "\r\n")
-				for _, header := range lheader {
-					index := strings.Index(header, ":")
-					if index == -1 {
-						log.Println("index - 1")
-						return
-					}
-					key, value := header[:index], header[index+2:]
-					req.Headers[key] = value
-				}
-				log.Println("Headers: ")
-				for k, v := range req.Headers {
-					log.Println(k, v)
-				}
+			hLD := []byte{'\r', '\n', '\r', '\n'}
+			hLE := bytes.Index(data, hLD)
+			headersLine := string(data[index:hLE])
+			headers := strings.Split(headersLine, "\r\n")[1:]
+			mp := make(map[string]string)
+			for _, v := range headers {
+				headerLine := strings.Split(v, ": ")
+				mp[headerLine[0]] = headerLine[1]
 			}
+			req.Headers = mp
 			s.mu.RLock()
 			f, good := s.handlers[p]
 			s.mu.RUnlock()
@@ -149,6 +134,7 @@ func (s *Server) handle(conn net.Conn) {
 				f(&req)
 			}
 			log.Println(string(data[:]))
+			log.Println(req.Headers)
 
 		}
 
