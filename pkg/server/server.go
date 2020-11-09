@@ -2,7 +2,6 @@ package server
 
 import (
 	"bytes"
-	"io"
 	"log"
 	"net"
 	"net/url"
@@ -44,74 +43,64 @@ func (s *Server) Register(path string, handler HandlerFunc) {
 
 // handle ...
 func (s *Server) handle(conn net.Conn) {
-	defer func() {
-		if cerr := conn.Close(); cerr != nil {
-			log.Println(cerr)
-		}
-	}()
+	defer conn.Close()
+
+	buf := make([]byte, (1024 * 50))
+
 	for {
-		buf := make([]byte, 4096)
-		n, err := conn.Read(buf)
-		if err == io.EOF {
-			log.Printf("%s", buf[:n])
-		}
+		rbyte, err := conn.Read(buf)
 		if err != nil {
-			log.Println(err)
 			return
 		}
-		//log.Printf("%s", buf[:n])
-
-		data := buf[:n]
-		rnIndex := []byte{'\r', '\n'}
-		reqEnd := bytes.Index(data, rnIndex)
-		if reqEnd == -1 {
-			log.Println(ErrBadRequest)
+		data := buf[:rbyte]
+		ldelim := []byte{'\r', '\n'}
+		index := bytes.Index(data, ldelim)
+		if index == -1 {
+			log.Println("chars not found")
 			return
 		}
-		reqLine := string(data[:reqEnd])
-		parts := strings.Split(reqLine, " ")
-		if len(parts) != 3 {
-			log.Println(ErrBadRequest)
-			return
-		}
-		path := parts[1]
-		uri, err := url.ParseRequestURI(path)
-
-		if err != nil {
-			log.Println("error in decoding")
-			return
-		}
-		p := strings.Split(uri.Path, "/")
-		if p[1] == "payments" && len(p) == 3 {
-			uri.RawQuery = "id=" + p[2]
-			var pathParams = map[string]string{}
-			pathParams["id"] = p[2]
-			var req = Request{conn, uri.Query(), pathParams}
-			s.mu.RLock()
-			fn, ok := s.handlers["/"+p[1]+"/{id}"]
-			s.mu.RUnlock()
-			if ok {
-				fn(&req)
-			}
-		} else if len(p) == 4 && p[2] == "product" {
-			p2 := strings.Split(p[1], "category")
-			if len(p2) < 2 || len(p) < 2 {
+		var req Request
+		var good bool = true
+		var path1 string = ""
+		rline := string(data[:index])
+		parts := strings.Split(rline, " ")
+		req.PathParams = make(map[string]string)
+		if len(parts) == 3 {
+			path, version := parts[1], parts[2]
+			decode, err := url.PathUnescape(path)
+			if err != nil {
+				log.Println(err)
 				return
 			}
-			if strings.Split(p[1], p2[1])[0] != "category" {
+			if version != "HTTP/1.1" {
+				log.Println("version is not valid")
 				return
 			}
-			var pathParams = map[string]string{}
-			pathParams["catId"] = p2[1]
-			pathParams["pId"] = p[3]
-			var req = Request{conn, uri.Query(), pathParams}
-			s.mu.RLock()
-			fn, ok := s.handlers["/category{catId}/product/{pId}"]
-			s.mu.RUnlock()
+			url, err := url.ParseRequestURI(decode)
+			if err != nil {
+				log.Println(err)
+				return
+			}
+			p := strings.Split(path, "/")
+			if len(p) < 1 {
+				return
+			}
+			if p[1] == "payments" {
+				path1 = "/" + p[1] + "/{id}"
+				if len(p) == 3 {
+					req.PathParams["id"] = p[2]
+				}
+			}
+			log.Println(good, path, url, p, path1)
+			fn, ok := s.handlers[path1]
 			if ok {
 				fn(&req)
+			} else {
+				conn.Close()
+				log.Print("conn.Close()")
 			}
 		}
+
 	}
 }
 
