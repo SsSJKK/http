@@ -18,6 +18,7 @@ type Request struct {
 	Conn        net.Conn
 	QueryParams url.Values
 	PathParams  map[string]string
+	Headers     map[string]string
 }
 
 // HandlerFunc ...
@@ -86,7 +87,9 @@ func (s *Server) handle(conn net.Conn) {
 			var p string
 			var z string
 			var zz string
-
+			var header []byte = data[index+2:]
+			req.Headers = make(map[string]string)
+			//var hh = make(map[string]string)
 			var pathParms = make(map[string]string)
 			for _, pathPart := range pathSplit {
 				b := true
@@ -112,20 +115,42 @@ func (s *Server) handle(conn net.Conn) {
 				}
 			}
 			req.PathParams = pathParms
-			log.Println(p)
-			log.Println(s.handlers)
-			log.Println(pathParms)
+			/// Headers .....
+			if len(header) > 0 {
+				ldelim := []byte{'\r', '\n', '\r', '\n'}
+				index := bytes.Index(header, ldelim)
+				if index == -1 {
+					log.Println("index -1")
+					return
+				}
+				data := string(header[:index])
+				lheader := strings.Split(data, "\r\n")
+				for _, header := range lheader {
+					index := strings.Index(header, ":")
+					if index == -1 {
+						log.Println("index - 1")
+						return
+					}
+					key, value := header[:index], header[index+2:]
+					req.Headers[key] = value
+				}
+				log.Println("Headers: ")
+				for k, v := range req.Headers {
+					log.Println(k, v)
+				}
+			}
 			s.mu.RLock()
-			f, ok := s.handlers[p]
+			f, good := s.handlers[p]
 			s.mu.RUnlock()
 
-			if ok == false {
+			if good == false {
 				conn.Close()
 			} else {
 				f(&req)
-
 			}
+
 		}
+
 	}
 }
 

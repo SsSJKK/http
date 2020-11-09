@@ -1,6 +1,8 @@
 ###
 
 GET http://localhost:9998/payments/23 HTTP/1.1
+Accept: application/json
+X-CustomHeader: custom header
 
 
 ###

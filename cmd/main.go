@@ -4,7 +4,6 @@ import (
 	"log"
 	"net"
 	"os"
-
 	"github.com/SsSJKK/http/pkg/server"
 )
 
@@ -22,7 +21,7 @@ func execute(host string, port string) (err error) {
 	srv := server.NewServer(net.JoinHostPort(host, port))
 	srv.Register("/payments/{id}", func(req *server.Request) {
 		id := req.PathParams["id"]
-		log.Print(id)
+		log.Println(id)
 	})
 	srv.Register("/category{category}/{id}", func(req *server.Request) {
 		catID := req.PathParams["category"]
