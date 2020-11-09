@@ -111,14 +111,17 @@ func (s *Server) handle(conn net.Conn) {
 					}
 				}
 			}
+			req.PathParams["catId"] = req.PathParams["categoryId"]
+		//	log.Println( req.PathParams)
 
 		}
 
 		var good bool = false
 		var f = func(req *Request) {}
-
+		path2 := strings.ReplaceAll(path1,"categoryId","catId")
+		//log.Print(path2)
 		s.mu.RLock()
-		f, good = s.handlers[path1]
+		f, good = s.handlers[path2]
 		s.mu.RUnlock()
 
 		if good == false {
