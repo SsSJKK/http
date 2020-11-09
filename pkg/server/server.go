@@ -135,6 +135,9 @@ func (s *Server) handle(conn net.Conn) {
 			}
 			log.Println(string(data[:]))
 			log.Println(req.Headers)
+			log.Println(req.PathParams)
+			log.Print(s.handlers)
+			log.Print(p)
 
 		}
 
