@@ -1,6 +1,7 @@
 ###
 
-GET http://localhost:9999/payments/23 HTTP/1.1
+GET http://localhost:9999/api/payments HTTP/1.1
+
 
 ###
-GET http://localhost:9999/category67/product/543 HTTP/1.1
+GET http://localhost:9999/api/category4574/4574 HTTP/1.1

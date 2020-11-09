@@ -82,13 +82,13 @@ func (s *Server) handle(conn net.Conn) {
 				return
 			}
 			p := strings.Split(path, "/")
-			if len(p) < 1 {
+			if len(p) < 2 {
 				return
 			}
-			if p[1] == "payments" {
-				path1 = "/" + p[1] + "/{id}"
-				if len(p) == 3 {
-					req.PathParams["id"] = p[2]
+			if p[2] == "payments" {
+				path1 = "/" + p[2] + "/{id}"
+				if len(p) == 4 {
+					req.PathParams["id"] = p[3]
 				}
 			}
 			log.Println(good, path, url, p, path1)
