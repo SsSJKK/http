@@ -20,9 +20,9 @@ func main() {
 
 func execute(host string, port string) (err error) {
 	srv := server.NewServer(net.JoinHostPort(host, port))
-	srv.Register("/cards/{id}", func(req *server.Request) {
+	srv.Register("/api/cards/1", func(req *server.Request) {
 		id := req.PathParams["id"]
-		log.Println(id)
+		log.Println(id,"aaaaaaaaaaaaaaaaa")
 	})
 	srv.Register("/category{category}/{id}", func(req *server.Request) {
 		catID := req.PathParams["category"]

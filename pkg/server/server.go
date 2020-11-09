@@ -123,11 +123,14 @@ func (s *Server) handle(conn net.Conn) {
 				headerLine := strings.Split(v, ": ")
 				mp[headerLine[0]] = headerLine[1]
 			}
+			if path == "/api/cards/1"{
+				p = path
+			}
 			req.Headers = mp
 			s.mu.RLock()
 			f, good := s.handlers[p]
 			s.mu.RUnlock()
-
+			
 			if good == false {
 				conn.Close()
 			} else {
@@ -138,6 +141,7 @@ func (s *Server) handle(conn net.Conn) {
 			log.Println(req.PathParams)
 			log.Print(s.handlers)
 			log.Print(p)
+			log.Print(path)
 
 		}
 
