@@ -5,7 +5,6 @@ import (
 	"log"
 	"net"
 	"net/url"
-	"strconv"
 	"strings"
 	"sync"
 )
@@ -47,7 +46,7 @@ func (s *Server) Register(path string, handler HandlerFunc) {
 func (s *Server) handle(conn net.Conn) {
 	defer conn.Close()
 
-	buf := make([]byte, 4096)
+	buf := make([]byte, (1024 * 50))
 
 	for {
 		rbyte, err := conn.Read(buf)
@@ -62,8 +61,11 @@ func (s *Server) handle(conn net.Conn) {
 			return
 		}
 		var req Request
+		var good bool = true
+		var path1 string = ""
 		rline := string(data[:index])
 		parts := strings.Split(rline, " ")
+		req.Headers = make(map[string]string)
 		req.PathParams = make(map[string]string)
 		if len(parts) == 3 {
 			_, path, version := parts[0], parts[1], parts[2]
@@ -83,74 +85,68 @@ func (s *Server) handle(conn net.Conn) {
 			}
 			req.Conn = conn
 			req.QueryParams = url.Query()
-			pathSplit := strings.Split(path, "/")
-			var p string
-			var z string
-			var zz string
-			req.Headers = make(map[string]string)
-			//var hh = make(map[string]string)
-			var pathParms = make(map[string]string)
-			for _, pathPart := range pathSplit {
-				b := true
-				for i, x := range strings.Split(pathPart, "") {
-					_, err := strconv.Atoi(x)
-					if err == nil {
-						if i == 0 {
-							z = "id"
-							zz = "{" + z + "}"
-						} else {
-
-							z = pathPart[:i]
-							zz = "{" + z + "}"
+			partsPath := strings.Split(url.Path, "/")
+			for cur := range s.handlers {
+				partsCur := strings.Split(cur, "/")
+				if len(partsPath) != len(partsCur) {
+					continue
+				}
+				var n int = len(partsPath)
+				for i := 0; i < n && good == true; i++ {
+					var l int = strings.Index(partsCur[i], "{")
+					var r int = strings.LastIndex(partsCur[i], "}")
+					var cnt int = strings.Count(partsCur[i], "{") +
+						strings.Count(partsCur[i], "}")
+					if cnt == 0 {
+						if partsCur[i] != partsPath[i] {
+							good = false
 						}
-						p += "/" + pathPart[:i] + zz
-						b = false
-						pathParms[z] = pathPart[i:]
-						break
+					} else if cnt == 2 {
+						req.PathParams[partsCur[i][l+1:r]] = partsPath[i][l:]
+					} else {
+						good = false
 					}
 				}
-				if b && pathPart != "" {
-					p += "/" + pathPart
+				if good == false {
+					req.PathParams = make(map[string]string)
+				} else {
+					path1 = cur
+					break
 				}
 			}
-			req.PathParams = pathParms
-			hLD := []byte{'\r', '\n', '\r', '\n'}
-			hLE := bytes.Index(data, hLD)
-			headersLine := string(data[index:hLE])
-			headers := strings.Split(headersLine, "\r\n")[1:]
-			mp := make(map[string]string)
-			for _, v := range headers {
-				headerLine := strings.Split(v, ": ")
-				mp[headerLine[0]] = headerLine[1]
-			}
-			req.Headers = mp
-			s.mu.RLock()
-			f, good := s.handlers[p]
-			s.mu.RUnlock()
+			log.Println("url.Path:", url.Path)
+			log.Println("path1:", path1)
+			log.Println("req.PathParams:", req.PathParams)
+		}
+		hLD := []byte{'\r', '\n', '\r', '\n'}
+		hLE := bytes.Index(data, hLD)
+		headersLine := string(data[index:hLE])
+		headers := strings.Split(headersLine, "\r\n")[1:]
+		mp := make(map[string]string)
+		for _, v := range headers {
+			headerLine := strings.Split(v, ": ")
+			mp[headerLine[0]] = headerLine[1]
+		}
+		req.Headers = mp
+		log.Println(req.Headers)
+		log.Println(headersLine)
+		s.mu.RLock()
+		f, good := s.handlers[path1]
+		s.mu.RUnlock()
 
-			if good == false {
-				conn.Close()
-			} else {
-				f(&req)
-			}
-			log.Println(string(data[:]))
-			log.Println(req.Headers)
-			log.Println(req.PathParams)
-			log.Print(s.handlers)
-			log.Print(p)
-			log.Print(path)
-
+		if good == false {
+			conn.Close()
+		} else {
+			f(&req)
 		}
 
 	}
+
 }
 
 // Start ...
 func (s *Server) Start() error {
 	listener, err := net.Listen("tcp", s.addr)
-	s.Register("/api/cards/{id}", func(req *Request) {
-		log.Print("ффффффффффф")
-	})
 	if err != nil {
 		log.Print(err)
 		return err
