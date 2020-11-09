@@ -115,6 +115,8 @@ func (s *Server) handle(conn net.Conn) {
 			}
 			req.PathParams = pathParms
 			log.Println(p)
+			log.Println(s.handlers)
+			log.Println(pathParms)
 			s.mu.RLock()
 			f, ok := s.handlers[p]
 			s.mu.RUnlock()
@@ -123,8 +125,7 @@ func (s *Server) handle(conn net.Conn) {
 				conn.Close()
 			} else {
 				f(&req)
-				log.Println(pathParms)
-				log.Println(s.handlers)
+
 			}
 		}
 	}
