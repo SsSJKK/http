@@ -124,6 +124,7 @@ func (s *Server) handle(conn net.Conn) {
 			} else {
 				f(&req)
 				log.Println(pathParms)
+				log.Println(s.handlers)
 			}
 		}
 	}
