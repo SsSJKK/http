@@ -86,7 +86,7 @@ func (s *Server) handle(conn net.Conn) {
 			var p string
 			var z string
 			var zz string
-			ii := 3
+
 			var pathParms = make(map[string]string)
 			for _, pathPart := range pathSplit {
 				b := true
@@ -97,10 +97,8 @@ func (s *Server) handle(conn net.Conn) {
 							z = "id"
 							zz = "{" + z + "}"
 						} else {
-							if i < 3 {
-								ii = i
-							}
-							z = pathPart[:ii] + "Id"
+
+							z = pathPart[:i]
 							zz = "{" + z + "}"
 						}
 						p += "/" + pathPart[:i] + zz

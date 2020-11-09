@@ -24,8 +24,8 @@ func execute(host string, port string) (err error) {
 		id := req.PathParams["id"]
 		log.Print(id)
 	})
-	srv.Register("/category{catId}/{id}", func(req *server.Request) {
-		catID := req.PathParams["catId"]
+	srv.Register("/category{category}/{id}", func(req *server.Request) {
+		catID := req.PathParams["category"]
 		pID := req.PathParams["id"]
 		log.Println(catID, pID)
 	})
