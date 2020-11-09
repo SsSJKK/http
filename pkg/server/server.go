@@ -18,6 +18,7 @@ type Request struct {
 	QueryParams url.Values
 	PathParams  map[string]string
 	Headers     map[string]string
+	Body        []byte
 }
 
 // HandlerFunc ...
@@ -130,6 +131,10 @@ func (s *Server) handle(conn net.Conn) {
 		req.Headers = mp
 		log.Println(req.Headers)
 		log.Println(headersLine)
+
+		/// body
+		req.Body = data[hLE+4:]
+		log.Print(string(req.Body[:]),"Body")
 		s.mu.RLock()
 		f, good := s.handlers[path1]
 		s.mu.RUnlock()
