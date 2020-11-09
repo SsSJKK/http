@@ -4,6 +4,7 @@ import (
 	"log"
 	"net"
 	"os"
+
 	"github.com/SsSJKK/http/pkg/server"
 )
 
@@ -19,7 +20,7 @@ func main() {
 
 func execute(host string, port string) (err error) {
 	srv := server.NewServer(net.JoinHostPort(host, port))
-	srv.Register("/payments/{id}", func(req *server.Request) {
+	srv.Register("/cards/{id}", func(req *server.Request) {
 		id := req.PathParams["id"]
 		log.Println(id)
 	})
