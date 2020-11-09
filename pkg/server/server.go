@@ -86,17 +86,21 @@ func (s *Server) handle(conn net.Conn) {
 			var p string
 			var z string
 			var zz string
+			ii := 3
 			var pathParms = make(map[string]string)
 			for _, pathPart := range pathSplit {
 				b := true
 				for i, x := range strings.Split(pathPart, "") {
 					_, err := strconv.Atoi(x)
 					if err == nil {
-						if i <= 2 {
+						if i == 0 {
 							z = "id"
 							zz = "{" + z + "}"
 						} else {
-							z = pathPart[:3] + "Id"
+							if i < 3 {
+								ii = i
+							}
+							z = pathPart[:ii] + "Id"
 							zz = "{" + z + "}"
 						}
 						p += "/" + pathPart[:i] + zz
@@ -110,15 +114,16 @@ func (s *Server) handle(conn net.Conn) {
 				}
 			}
 			req.PathParams = pathParms
-
+			log.Println(p)
 			s.mu.RLock()
-			f, good := s.handlers[p]
+			f, ok := s.handlers[p]
 			s.mu.RUnlock()
 
-			if good == false {
+			if ok == false {
 				conn.Close()
 			} else {
 				f(&req)
+				log.Println(pathParms)
 			}
 		}
 	}

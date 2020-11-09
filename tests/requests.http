@@ -4,4 +4,4 @@ GET http://localhost:9998/payments/23 HTTP/1.1
 
 
 ###
-GET http://localhost:9998/category474/4574 HTTP/1.1
+GET http://localhost:9998/c4574/4574  HTTP/1.1
