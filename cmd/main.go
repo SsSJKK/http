@@ -1,7 +1,7 @@
 package main
 
 import (
-	"log"
+	"fmt"
 	"net"
 	"os"
 
@@ -21,13 +21,13 @@ func main() {
 func execute(host string, port string) (err error) {
 	srv := server.NewServer(net.JoinHostPort(host, port))
 	srv.Register("/api/cards/1", func(req *server.Request) {
-		id := req.PathParams["id"]
-		log.Println(id,"aaaaaaaaaaaaaaaaa")
+		fmt.Println("OK")
 	})
-	srv.Register("/category{category}/{id}", func(req *server.Request) {
-		catID := req.PathParams["category"]
-		pID := req.PathParams["id"]
-		log.Println(catID, pID)
+	srv.Register("/c{catory}/{id}", func(req *server.Request) {
+		fmt.Println("OK")
+	})
+	srv.Register("/payments/{id}", func(req *server.Request) {
+		fmt.Println("OK")
 	})
 	return srv.Start()
 }

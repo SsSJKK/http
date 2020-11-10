@@ -7,4 +7,9 @@ X-CustomHeader: custom header
 
 
 ###
-GET http://localhost:9998/category22/22 HTTP/1.1
+GET http://localhost:9998/c22/22 HTTP/1.1
+
+
+
+###
+GET http://localhost:9998/payments/22 HTTP/1.1

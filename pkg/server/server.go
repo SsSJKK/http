@@ -2,9 +2,11 @@ package server
 
 import (
 	"bytes"
+	"fmt"
 	"log"
 	"net"
 	"net/url"
+	"strconv"
 	"strings"
 	"sync"
 )
@@ -63,7 +65,7 @@ func (s *Server) handle(conn net.Conn) {
 		}
 		var req Request
 		var good bool = true
-		var path1 string = ""
+		rPath := ""
 		rline := string(data[:index])
 		parts := strings.Split(rline, " ")
 		req.Headers = make(map[string]string)
@@ -86,39 +88,39 @@ func (s *Server) handle(conn net.Conn) {
 			}
 			req.Conn = conn
 			req.QueryParams = url.Query()
-			partsPath := strings.Split(url.Path, "/")
-			for cur := range s.handlers {
-				partsCur := strings.Split(cur, "/")
-				if len(partsPath) != len(partsCur) {
-					continue
-				}
-				var n int = len(partsPath)
-				for i := 0; i < n && good == true; i++ {
-					var l int = strings.Index(partsCur[i], "{")
-					var r int = strings.LastIndex(partsCur[i], "}")
-					var cnt int = strings.Count(partsCur[i], "{") +
-						strings.Count(partsCur[i], "}")
-					if cnt == 0 {
-						if partsCur[i] != partsPath[i] {
-							good = false
+			getPath := path
+			gPS := strings.Split(getPath, "/")
+			for regPath := range s.handlers {
+				rPS := strings.Split(regPath, "/")
+				if len(rPS) == len(gPS) {
+					for i, v := range rPS {
+						if v == "" {
+							continue
 						}
-					} else if cnt == 2 {
-						req.PathParams[partsCur[i][l+1:r]] = partsPath[i][l:]
-					} else {
-						good = false
+						if v == gPS[i] {
+							rPath += "/" + v
+							_, err := strconv.Atoi(gPS[i])
+							if err == nil {
+								req.PathParams["id"] = gPS[i]
+							}
+							continue
+						}
+						a := strings.Index(v, "{")
+						if a == -1 {
+							break
+						}
+						if v[:a] != gPS[i][:a] {
+							break
+						}
+						key := v[a:]
+						val := gPS[i][a:]
+						rPath += "/" + v
+						req.PathParams[key[1:len(key)-1]] = val
 					}
 				}
-				if good == false {
-					req.PathParams = make(map[string]string)
-				} else {
-					path1 = cur
-					break
-				}
 			}
-			log.Println("url.Path:", url.Path)
-			log.Println("path1:", path1)
-			log.Println("req.PathParams:", req.PathParams)
 		}
+		//HEADERS
 		hLD := []byte{'\r', '\n', '\r', '\n'}
 		hLE := bytes.Index(data, hLD)
 		headersLine := string(data[index:hLE])
@@ -129,16 +131,25 @@ func (s *Server) handle(conn net.Conn) {
 			mp[headerLine[0]] = headerLine[1]
 		}
 		req.Headers = mp
-		log.Println(req.Headers)
-		log.Println(headersLine)
-
-		/// body
 		req.Body = data[hLE+4:]
-		log.Print(string(req.Body[:]),"Body")
+		fmt.Println("QueryParams: ")
+		for k, v := range req.QueryParams {
+			fmt.Println(k, v)
+		}
+		fmt.Println()
+		fmt.Println("PathParams: ")
+		for k, v := range req.PathParams {
+			fmt.Println(k, v)
+		}
+		fmt.Println()
+		fmt.Println("Headers: ")
+		for k, v := range req.Headers {
+			fmt.Println(k, v)
+		}
+		fmt.Println()
 		s.mu.RLock()
-		f, good := s.handlers[path1]
+		f, good := s.handlers[rPath]
 		s.mu.RUnlock()
-
 		if good == false {
 			conn.Close()
 		} else {
