@@ -5,11 +5,16 @@ Accept: application/json
 X-CustomHeader: custom header
 
 
+###
+GET http://localhost:9999/banners.save?id=0 HTTP/1.1
 
 ###
-GET http://localhost:9998/c22/22 HTTP/1.1
-
+GET http://localhost:9999/banners.getAll HTTP/1.1
 
 
 ###
-GET http://localhost:9998/payments/22 HTTP/1.1
+GET http://localhost:9999/banners.getById HTTP/1.1
+
+###
+GET http://localhost:9999/banners.removeById HTTP/1.1
+

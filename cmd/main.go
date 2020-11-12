@@ -1,33 +1,33 @@
 package main
 
 import (
-	"fmt"
+	"log"
 	"net"
+	"net/http"
 	"os"
 
-	"github.com/SsSJKK/http/pkg/server"
+	"github.com/SsSJKK/http/cmd/app"
+	"github.com/SsSJKK/http/pkg/banners"
 )
 
 func main() {
 	host := "0.0.0.0"
-	port := "9998"
-
+	port := "9999"
+	log.Println("main")
 	if err := execute(host, port); err != nil {
 		os.Exit(1)
 	}
-
 }
 
 func execute(host string, port string) (err error) {
-	srv := server.NewServer(net.JoinHostPort(host, port))
-	srv.Register("/api/cards/1", func(req *server.Request) {
-		fmt.Println("OK")
-	})
-	srv.Register("/c{catory}/{id}", func(req *server.Request) {
-		fmt.Println("OK")
-	})
-	srv.Register("/payments/{id}", func(req *server.Request) {
-		fmt.Println("OK")
-	})
-	return srv.Start()
+	mux := http.NewServeMux()
+	bannersSvc := banners.NewService()
+	server := app.NewServer(mux, bannersSvc)
+	srv := &http.Server{
+		Addr:    net.JoinHostPort(host, port),
+		Handler: server,
+	}
+	server.Init()
+	log.Println("execute")
+	return srv.ListenAndServe()
 }
