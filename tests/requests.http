@@ -18,3 +18,6 @@ GET http://localhost:9999/banners.getById HTTP/1.1
 ###
 GET http://localhost:9999/banners.removeById HTTP/1.1
 
+
+###
+GET http://localhost:9999/banners.save?id=4&title=233a&content=2 HTTP/1.1

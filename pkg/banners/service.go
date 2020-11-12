@@ -57,8 +57,10 @@ func (s *Service) Save(ctx context.Context, item *Banner) (*Banner, error) {
 		s.items = append(s.items, item)
 		return item, nil
 	}
-	for _, bnr := range s.items {
+	for i, bnr := range s.items {
 		if bnr.ID == item.ID {
+			bnr = item
+			s.items[i] = bnr
 			return bnr, nil
 		}
 	}
