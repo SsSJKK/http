@@ -89,6 +89,7 @@ func (s *Server) handleSaveBanner(writer http.ResponseWriter, request *http.Requ
 			Content: request.PostFormValue("content"),
 			Button:  request.PostFormValue("button"),
 			Link:    request.PostFormValue("link"),
+			Image:   request.PostFormValue("image"),
 		}, request)
 	if err != nil {
 		log.Println(err)
