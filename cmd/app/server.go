@@ -75,7 +75,7 @@ func (s *Server) handleGetBannerByID(writer http.ResponseWriter, request *http.R
 }
 func (s *Server) handleSaveBanner(writer http.ResponseWriter, request *http.Request) {
 
-	idstr := request.URL.Query().Get("id")
+	idstr := request.PostFormValue("id")
 	idInt, err := strconv.ParseInt(idstr, 10, 64)
 	if err != nil {
 		log.Println(err)
@@ -85,11 +85,11 @@ func (s *Server) handleSaveBanner(writer http.ResponseWriter, request *http.Requ
 	banner, err := s.bannersSvc.Save(request.Context(),
 		&banners.Banner{
 			ID:      idInt,
-			Title:   request.URL.Query().Get("title"),
-			Content: request.URL.Query().Get("content"),
-			Button:  request.URL.Query().Get("button"),
-			Link:    request.URL.Query().Get("link"),
-		})
+			Title:   request.PostFormValue("title"),
+			Content: request.PostFormValue("content"),
+			Button:  request.PostFormValue("button"),
+			Link:    request.PostFormValue("link"),
+		}, request)
 	if err != nil {
 		log.Println(err)
 		http.Error(writer, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)

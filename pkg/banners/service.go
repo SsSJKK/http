@@ -3,6 +3,11 @@ package banners
 import (
 	"context"
 	"errors"
+	"io"
+	"net/http"
+	"os"
+	"strconv"
+	"strings"
 	"sync"
 )
 
@@ -26,6 +31,7 @@ type Banner struct {
 	Content string
 	Button  string
 	Link    string
+	Image   string
 }
 
 //All ...
@@ -48,17 +54,43 @@ func (s *Service) ByID(ctx context.Context, id int64) (*Banner, error) {
 }
 
 //Save ...
-func (s *Service) Save(ctx context.Context, item *Banner) (*Banner, error) {
+func (s *Service) Save(ctx context.Context, item *Banner, req *http.Request) (*Banner, error) {
 	s.mu.RLock()
+	sF, sFH, err := req.FormFile("image")
 	defer s.mu.RUnlock()
+	defer sF.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	path := "./web/banners/"
+	err = req.ParseMultipartForm(10 * 1024 * 1024)
+
 	if item.ID == 0 {
 		nextID++
 		item.ID = nextID
+		fN := strconv.Itoa(int(nextID)) + sFH.Filename[strings.LastIndex(sFH.Filename, "."):]
+		item.Image = fN
+		f, err := os.OpenFile(path+fN, os.O_WRONLY|os.O_CREATE, 0666)
+		if err != nil {
+			return nil, err
+		}
+		defer f.Close()
+		io.Copy(f, sF)
 		s.items = append(s.items, item)
 		return item, nil
 	}
 	for i, bnr := range s.items {
 		if bnr.ID == item.ID {
+			fN := strconv.Itoa(int(bnr.ID)) + sFH.Filename[strings.LastIndex(sFH.Filename, "."):]
+			item.Image = fN
+			f, err := os.OpenFile(path+fN, os.O_WRONLY|os.O_CREATE, 0666)
+			if err != nil {
+				return nil, err
+			}
+
+			defer f.Close()
+			io.Copy(f, sF)
 			bnr = item
 			s.items[i] = bnr
 			return bnr, nil

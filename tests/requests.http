@@ -13,7 +13,7 @@ GET http://localhost:9999/banners.getAll HTTP/1.1
 
 
 ###
-GET http://localhost:9999/banners.getById HTTP/1.1
+GET http://localhost:9999/banners.getById?id=1 HTTP/1.1
 
 ###
 GET http://localhost:9999/banners.removeById HTTP/1.1
